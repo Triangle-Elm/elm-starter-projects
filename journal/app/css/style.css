@@ -1,0 +1,51 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 10px;
+}
+
+nav > * {
+  margin-right: 2ch;
+}
+
+nav > *:last-child {
+  margin-right: 0;
+}
+
+ul.journal li {
+  list-style: none;
+}
+
+.editor {
+  display: flex;
+}
+
+.editor nav {
+  text-align: right;
+}
+
+.editor > * {
+  flex-basis: 50%;
+  flex-grow: 1;
+  flex-shrink: 1;
+  margin-right: 10px;
+}
+
+.editor .title {
+  margin-bottom: 10px;
+}
+
+.inputs input,
+.inputs textarea {
+  width: 100%;
+}
+
+.inputs textarea {
+  height: 50em;
+}
+
+.entry .title {
+  margin-top: 0px;
+}

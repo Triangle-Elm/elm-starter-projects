@@ -1,0 +1,22 @@
+{
+  "name": "brunch-with-elm",
+  "version": "1.0.0",
+  "description": "Brunch With Elm",
+  "main": "brunch-config.js",
+  "scripts": {
+    "postinstall": "elm package install -y",
+    "start": "brunch watch --server",
+    "build": "brunch build --production"
+  },
+  "keywords": ["elm", "brunch"],
+  "author": "You!",
+  "license": "BSD3",
+  "dependencies": {},
+  "devDependencies": {
+    "auto-reload-brunch": "^2.7.1",
+    "autoprefixer": "^7.1.6",
+    "brunch": "^2.8.2",
+    "elm-fancy-brunch": "^1.0.0",
+    "postcss-brunch": "^2.1.0"
+  }
+}
