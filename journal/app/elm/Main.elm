@@ -17,16 +17,18 @@ import Html
 import Html.Attributes exposing (class, value, href)
 import Html.Events exposing (onInput, onClick)
 import Markdown
-import Data.Journal as Journal exposing (Journal, Entry, updateTitle, updateContent)
+import Journal exposing (Journal, Entry, updateTitle, updateContent)
 import Array exposing (Array)
+import Ports
 
 
 main : Program Never Model Msg
 main =
-    Html.beginnerProgram
-        { model = initalModel
+    Html.program
+        { init = init
         , update = update
         , view = view
+        , subscriptions = subscriptions
         }
 
 
@@ -48,19 +50,13 @@ type ViewState
     | NotFound
 
 
-initalModel : Model
-initalModel =
-    { entries =
-        Array.fromList
-            [ { title = "Entry #1"
-              , content = "## Nothing to see here."
-              }
-            , { title = "Another One"
-              , content = "_italics_"
-              }
-            ]
-    , viewState = Listing
-    }
+init : ( Model, Cmd Msg )
+init =
+    ( { entries = Journal.empty
+      , viewState = Listing
+      }
+    , Ports.loadJournal
+    )
 
 
 
@@ -75,66 +71,88 @@ type Msg
     | UpdateEntryTitle String
     | UpdateEntryContent String
     | SaveEntry
+    | JournalUpdated Journal
+    | UnknownData String
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ShowEntry pos ->
-            { model | viewState = Viewing pos }
+            ( { model | viewState = Viewing pos }, Cmd.none )
 
         ListEntries ->
-            { model | viewState = Listing }
+            ( { model | viewState = Listing }, Cmd.none )
 
         EditEntry pos ->
             case Journal.getEntry pos model.entries of
                 Just entry ->
-                    { model | viewState = Editing pos entry }
+                    ( { model | viewState = Editing pos entry }, Cmd.none )
 
                 Nothing ->
-                    { model | viewState = NotFound }
+                    ( { model | viewState = NotFound }, Cmd.none )
 
         NewEntry ->
-            { model | viewState = Creating (Entry "" "") }
+            ( { model | viewState = Creating (Entry "" "") }, Cmd.none )
 
         SaveEntry ->
             case model.viewState of
                 Editing pos entry ->
-                    { model
-                        | entries = Journal.updateEntry pos entry model.entries
-                        , viewState = Viewing pos
-                    }
+                    let
+                        newJournal =
+                            Journal.updateEntry pos entry model.entries
+                    in
+                        ( { model | viewState = Viewing pos }
+                        , Ports.saveJournal newJournal
+                        )
 
                 Creating entry ->
-                    { model
-                        | entries = Journal.addEntry entry model.entries
-                        , viewState = Listing
-                    }
+                    let
+                        newJournal =
+                            Journal.addEntry entry model.entries
+                    in
+                        ( { model | viewState = Listing }
+                        , Ports.saveJournal newJournal
+                        )
 
                 _ ->
-                    model
+                    ( model, Cmd.none )
 
         UpdateEntryTitle newTitle ->
             case model.viewState of
                 Editing pos entry ->
-                    { model | viewState = Editing pos (Journal.updateTitle newTitle entry) }
+                    ( { model | viewState = Editing pos (Journal.updateTitle newTitle entry) }
+                    , Cmd.none
+                    )
 
                 Creating entry ->
-                    { model | viewState = Creating (Journal.updateTitle newTitle entry) }
+                    ( { model | viewState = Creating (Journal.updateTitle newTitle entry) }
+                    , Cmd.none
+                    )
 
                 _ ->
-                    model
+                    ( model, Cmd.none )
 
         UpdateEntryContent newContent ->
             case model.viewState of
                 Editing pos entry ->
-                    { model | viewState = Editing pos (Journal.updateContent newContent entry) }
+                    ( { model | viewState = Editing pos (Journal.updateContent newContent entry) }
+                    , Cmd.none
+                    )
 
                 Creating entry ->
-                    { model | viewState = Creating (Journal.updateContent newContent entry) }
+                    ( { model | viewState = Creating (Journal.updateContent newContent entry) }
+                    , Cmd.none
+                    )
 
                 _ ->
-                    model
+                    ( model, Cmd.none )
+
+        JournalUpdated journal ->
+            ( { model | entries = journal }, Cmd.none )
+
+        UnknownData description ->
+            ( model, Cmd.none )
 
 
 
@@ -236,3 +254,12 @@ notFoundView =
 navLink : Msg -> String -> Html Msg
 navLink msg content =
     a [ onClick msg, href "#" ] [ text content ]
+
+
+
+-- Subscriptions
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Ports.journalUpdates JournalUpdated UnknownData
