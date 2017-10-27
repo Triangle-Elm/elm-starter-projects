@@ -37,7 +37,7 @@ main =
 
 
 type alias Model =
-    { entries : Journal
+    { journal : Journal
     , viewState : ViewState
     }
 
@@ -52,7 +52,7 @@ type ViewState
 
 init : ( Model, Cmd Msg )
 init =
-    ( { entries = Journal.empty
+    ( { journal = Journal.empty
       , viewState = Listing
       }
     , Ports.loadJournal
@@ -85,7 +85,7 @@ update msg model =
             ( { model | viewState = Listing }, Cmd.none )
 
         EditEntry pos ->
-            case Journal.getEntry pos model.entries of
+            case Journal.getEntry pos model.journal of
                 Just entry ->
                     ( { model | viewState = Editing pos entry }, Cmd.none )
 
@@ -98,61 +98,69 @@ update msg model =
         SaveEntry ->
             case model.viewState of
                 Editing pos entry ->
-                    let
-                        newJournal =
-                            Journal.updateEntry pos entry model.entries
-                    in
-                        ( { model | viewState = Viewing pos }
-                        , Ports.saveJournal newJournal
-                        )
+                    saveJournal model (Journal.updateEntry pos entry model.journal)
 
                 Creating entry ->
-                    let
-                        newJournal =
-                            Journal.addEntry entry model.entries
-                    in
-                        ( { model | viewState = Listing }
-                        , Ports.saveJournal newJournal
-                        )
+                    saveJournal model (Journal.addEntry entry model.journal)
 
                 _ ->
                     ( model, Cmd.none )
 
         UpdateEntryTitle newTitle ->
-            case model.viewState of
-                Editing pos entry ->
-                    ( { model | viewState = Editing pos (Journal.updateTitle newTitle entry) }
-                    , Cmd.none
-                    )
-
-                Creating entry ->
-                    ( { model | viewState = Creating (Journal.updateTitle newTitle entry) }
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, Cmd.none )
+            let
+                newViewState =
+                    updateEditingState model.viewState (Journal.updateTitle newTitle)
+            in
+                ( { model | viewState = newViewState }, Cmd.none )
 
         UpdateEntryContent newContent ->
-            case model.viewState of
-                Editing pos entry ->
-                    ( { model | viewState = Editing pos (Journal.updateContent newContent entry) }
-                    , Cmd.none
-                    )
-
-                Creating entry ->
-                    ( { model | viewState = Creating (Journal.updateContent newContent entry) }
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, Cmd.none )
+            let
+                newViewState =
+                    updateEditingState model.viewState (Journal.updateContent newContent)
+            in
+                ( { model | viewState = newViewState }, Cmd.none )
 
         JournalUpdated journal ->
-            ( { model | entries = journal }, Cmd.none )
+            let
+                newView =
+                    case model.viewState of
+                        Editing pos _ ->
+                            Viewing pos
 
+                        Creating _ ->
+                            Listing
+
+                        _ ->
+                            model.viewState
+            in
+                ( { model
+                    | journal = journal
+                    , viewState = newView
+                  }
+                , Cmd.none
+                )
+
+        -- unrecognized message from js
         UnknownData description ->
             ( model, Cmd.none )
+
+
+saveJournal : Model -> Journal -> ( Model, Cmd Msg )
+saveJournal model newJournal =
+    ( model, Ports.saveJournal newJournal )
+
+
+updateEditingState : ViewState -> (Entry -> Entry) -> ViewState
+updateEditingState viewState updateFn =
+    case viewState of
+        Editing pos entry ->
+            Editing pos (updateFn entry)
+
+        Creating entry ->
+            Creating (updateFn entry)
+
+        _ ->
+            viewState
 
 
 
@@ -163,10 +171,10 @@ view : Model -> Html Msg
 view model =
     case model.viewState of
         Listing ->
-            listView model.entries
+            listView model.journal
 
         Viewing pos ->
-            entryViewer pos model.entries
+            entryViewer pos model.journal
 
         Creating entry ->
             entryEditor SaveEntry ListEntries entry
