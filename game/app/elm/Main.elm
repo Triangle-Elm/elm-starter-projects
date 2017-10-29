@@ -3,7 +3,7 @@ module Main exposing (main)
 import Html exposing (Html, text, div, button)
 import AnimationFrame
 import Time exposing (Time)
-import Collage exposing (Form, collage, square, filled, moveX)
+import Collage exposing (Form, collage, square, filled, move, rect)
 import Element
 import Color
 import Char
@@ -24,6 +24,18 @@ main =
 
 
 type alias Model =
+    { level : Level
+    , character : Character
+    }
+
+
+type alias Level =
+    { xSize : Int
+    , ySize : Int
+    }
+
+
+type alias Character =
     { moveState : MoveState
     , position : ( Float, Float )
     }
@@ -41,16 +53,22 @@ type Direction
 
 init : ( Model, Cmd Msg )
 init =
-    ( { moveState = Stationary
-      , position = ( 0, 0 )
+    ( { level =
+            { xSize = 800
+            , ySize = 500
+            }
+      , character =
+            { moveState = Stationary
+            , position = ( 0, -240 )
+            }
       }
     , Cmd.none
     )
 
 
-currentDirection : Model -> Maybe Direction
-currentDirection model =
-    case model.moveState of
+currentDirection : Character -> Maybe Direction
+currentDirection character =
+    case character.moveState of
         Moving direction ->
             Just direction
 
@@ -71,29 +89,39 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    ( { model
+        | character =
+            updateCharacter msg model.level model.character
+      }
+    , Cmd.none
+    )
+
+
+updateCharacter : Msg -> Level -> Character -> Character
+updateCharacter msg level character =
     case msg of
         MoveStart direction ->
-            ( { model | moveState = Moving direction }, Cmd.none )
+            { character | moveState = Moving direction }
 
         MoveEnd direction ->
-            if currentDirection model == Just direction then
-                ( { model | moveState = Stationary }, Cmd.none )
+            if currentDirection character == Just direction then
+                { character | moveState = Stationary }
             else
-                ( model, Cmd.none )
+                character
 
         Frame dt ->
-            ( model
-                |> move dt
-            , Cmd.none
-            )
+            movement dt level character
 
         NoOp ->
-            ( model, Cmd.none )
+            character
 
 
-move : Time -> Model -> Model
-move dt obj =
+movement : Time -> Level -> Character -> Character
+movement dt level obj =
     let
+        halfLevel =
+            (toFloat level.xSize) / 2
+
         baseSpeed =
             400
 
@@ -113,7 +141,9 @@ move dt obj =
                 obj.position
                     |> Tuple.mapFirst
                         (\pos ->
-                            pos + (speed * (Time.inSeconds dt))
+                            (pos + (speed * (Time.inSeconds dt)))
+                                |> max -halfLevel
+                                |> min halfLevel
                         )
         }
 
@@ -126,9 +156,24 @@ view : Model -> Html Msg
 view model =
     Element.toHtml <|
         collage
-            500
-            500
-            [ character model ]
+            model.level.xSize
+            model.level.ySize
+            [ background model.level
+            , character model.character
+            ]
+
+
+background : Level -> Form
+background level =
+    rect (toFloat level.xSize) (toFloat level.ySize)
+        |> filled Color.blue
+
+
+character : Character -> Form
+character character =
+    square 10
+        |> filled Color.yellow
+        |> move character.position
 
 
 
@@ -175,10 +220,3 @@ actionEnds key =
         MoveEnd Right
     else
         NoOp
-
-
-character : Model -> Form
-character model =
-    square 10
-        |> filled Color.blue
-        |> moveX (Tuple.first model.position)
