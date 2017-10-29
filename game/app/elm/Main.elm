@@ -3,8 +3,9 @@ module Main exposing (main)
 import Html exposing (Html, text, div, button)
 import AnimationFrame
 import Time exposing (Time)
-import Collage exposing (Form, collage, square, filled, move, rect)
-import Element
+import Collage exposing (Form, collage, filled, move, rect, toForm, groupTransform)
+import Transform
+import Element exposing (image)
 import Color
 import Char
 import Keyboard exposing (KeyCode)
@@ -36,18 +37,14 @@ type alias Level =
 
 
 type alias Character =
-    { moveState : MoveState
+    { facing : Direction
     , position : ( Float, Float )
     , velocity : ( Float, Float )
     , baseSpeed : Float
     , jumpVel : Float
     , gravity : Float
+    , img : String
     }
-
-
-type MoveState
-    = Stationary
-    | Moving Direction
 
 
 type Direction
@@ -62,12 +59,13 @@ init =
             , ySize = 500
             }
       , character =
-            { moveState = Stationary
-            , position = ( 0, -240 )
+            { facing = Right
+            , position = ( 0, -234 )
             , velocity = ( 0, 0 )
             , baseSpeed = 400
             , jumpVel = 400
             , gravity = 1000
+            , img = "sprites/player character/32 x 32 platform character_idle_0.png"
             }
       }
     , Cmd.none
@@ -86,6 +84,11 @@ currentDirection character =
             Just Left
         else
             Nothing
+
+
+characterImg : String -> Int -> String
+characterImg state frame =
+    "sprites/player character/32 x 32 platform character_" ++ state ++ "_" ++ (toString frame) ++ ".png"
 
 
 
@@ -123,7 +126,10 @@ updateCharacter msg level character =
                         Right ->
                             character.baseSpeed
             in
-                { character | velocity = ( xVel, Tuple.second character.velocity ) }
+                { character
+                    | velocity = ( xVel, Tuple.second character.velocity )
+                    , facing = direction
+                }
 
         MoveEnd direction ->
             if currentDirection character == Just direction then
@@ -138,7 +144,9 @@ updateCharacter msg level character =
                 character
 
         Frame dt ->
-            movement dt level character
+            character
+                |> movement dt level
+                |> appearance dt
 
         NoOp ->
             character
@@ -151,7 +159,7 @@ movement dtMillis level obj =
             (toFloat level.xSize) / 2
 
         levelFloor =
-            10 - (toFloat level.ySize) / 2
+            16 - (toFloat level.ySize) / 2
 
         dt =
             Time.inSeconds dtMillis
@@ -182,6 +190,26 @@ movement dtMillis level obj =
         }
 
 
+appearance : Time -> Character -> Character
+appearance dtMillis character =
+    let
+        dt =
+            Time.inSeconds dtMillis
+
+        vx =
+            Tuple.first (character.velocity)
+
+        aniState =
+            if vx /= 0 then
+                "run"
+            else
+                "idle"
+    in
+        { character
+            | img = characterImg aniState 0
+        }
+
+
 
 -- View
 
@@ -205,9 +233,20 @@ background level =
 
 character : Character -> Form
 character character =
-    square 10
-        |> filled Color.yellow
-        |> move character.position
+    let
+        xScale =
+            case character.facing of
+                Left ->
+                    -1
+
+                Right ->
+                    1
+    in
+        [ image 32 32 character.img
+            |> toForm
+        ]
+            |> groupTransform (Transform.scaleX xScale)
+            |> move (character.position |> Tuple.mapFirst ((*) xScale))
 
 
 
