@@ -1,6 +1,7 @@
 module Main exposing (main)
 
-import Html exposing (Html, text, div, button)
+import Html exposing (Html, text, div)
+import Html.Attributes exposing (class)
 import AnimationFrame
 import Time exposing (Time)
 import Collage exposing (Form, collage, filled, move, rect, toForm, groupTransform)
@@ -216,13 +217,18 @@ appearance dtMillis character =
 
 view : Model -> Html Msg
 view model =
-    Element.toHtml <|
-        collage
-            model.level.xSize
-            model.level.ySize
-            [ background model.level
-            , character model.character
+    div [ class "main" ]
+        [ Element.toHtml <|
+            collage
+                model.level.xSize
+                model.level.ySize
+                [ background model.level
+                , character model.character
+                ]
+        , div [ class "instructions" ]
+            [ text "Use A and D to move, Space to jump"
             ]
+        ]
 
 
 background : Level -> Form
@@ -262,8 +268,8 @@ type alias Controls =
 
 controls : Controls
 controls =
-    { left = Char.toCode 'J'
-    , right = Char.toCode 'L'
+    { left = Char.toCode 'A'
+    , right = Char.toCode 'D'
     , jump = Char.toCode ' '
     }
 

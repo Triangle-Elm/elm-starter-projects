@@ -3,10 +3,12 @@ body {
   text-align: center;
 }
 
-.counter {
-  font-size: 3rem;
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.controls button {
-  margin: 5px;
+.instructions {
+  margin: 10px;
 }
