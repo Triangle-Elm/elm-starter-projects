@@ -1,7 +1,7 @@
 # Elm Starter Projects
 
 This is a small collection of basic apps written in Elm. They're intended to be
-a seeds for getting started with Elm, or exploring new concepts in the langauge.
+seeds for getting started with Elm, or exploring new concepts in the langauge.
 They're all intentionally a bit incomplete or simple to encourage additions and
 experimentation.
 
