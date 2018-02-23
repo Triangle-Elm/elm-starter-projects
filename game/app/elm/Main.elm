@@ -11,7 +11,7 @@ import Color
 import Char
 import Keyboard exposing (KeyCode)
 
-
+main : Program Never Model Msg
 main =
     Html.program
         { init = init
