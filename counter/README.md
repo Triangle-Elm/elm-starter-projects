@@ -2,7 +2,7 @@
 
 # Overview
 
-This is a simple counter iimplemented with Elm. It's about the simplest thing
+This is a simple counter implemented with Elm. It's about the simplest thing
 you can do with user input, but it's enough to show the flow of data in the Elm
 architecture. This also makes it very easy to add to and modify.
 
