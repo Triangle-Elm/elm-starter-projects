@@ -19,7 +19,7 @@
     "auto-reload-brunch": "^2.7.1",
     "autoprefixer": "^7.1.6",
     "brunch": "^2.8.2",
-    "elm-fancy-brunch": "^1.0.0",
+    "elm-fancy-brunch": "^1.0.1",
     "elm-format": "^0.6.1-alpha",
     "postcss-brunch": "^2.1.0"
   }
