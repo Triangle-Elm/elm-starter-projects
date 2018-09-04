@@ -1,8 +1,8 @@
-port module Ports exposing (loadJournal, saveJournal, journalUpdates)
+port module Ports exposing (journalUpdates, loadJournal, saveJournal)
 
-import Json.Decode exposing (Value, decodeValue)
-import Json.Encode as Encode exposing (object)
 import Journal exposing (Journal)
+import Json.Decode as Decode exposing (Value, decodeValue)
+import Json.Encode as Encode exposing (object)
 
 
 saveJournal : Journal -> Cmd msg
@@ -43,9 +43,9 @@ parseMessage success unknown json =
             decodeValue Journal.decoder json
                 |> Result.map success
     in
-        case parseResult of
-            Ok msg ->
-                msg
+    case parseResult of
+        Ok msg ->
+            msg
 
-            Err str ->
-                unknown str
+        Err str ->
+            unknown (Decode.errorToString str)

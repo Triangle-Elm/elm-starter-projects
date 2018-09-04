@@ -8,7 +8,7 @@ architecture. This also makes it very easy to add to and modify.
 
 ## Getting Started
 
-### Install
+### Install Dependencies
 
 `npm install`
 
@@ -27,7 +27,7 @@ architecture. This also makes it very easy to add to and modify.
 Elm binaries can be found in `node_modules/.bin`, if you do not have Elm
 installed globally. With the latest npm you can run:
 
-`npx elm-package install <packageName>`
+`npx elm install <packageName>`
 
 to install new packages. Alternatively, you could add scripts in `package.json`
 and run them via `npm run ...`

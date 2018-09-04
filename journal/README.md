@@ -10,11 +10,9 @@ good project to look at if you're interested in interop with Javascript
 
 ## Getting Started
 
-### Install
+### Install Dependencies
 
 `npm install`
-
-`npx elm-package install`
 
 ### Run
 
@@ -29,7 +27,7 @@ good project to look at if you're interested in interop with Javascript
 Elm binaries can be found in `node_modules/.bin`, if you do not have Elm
 installed globally. With the latest npm you can run:
 
-`npx elm-package install <packageName>`
+`npx elm install <packageName>`
 
 to install new packages. Alternatively, you could add scripts in `package.json`
 and run them via `npm run ...`

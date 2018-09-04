@@ -1,26 +1,20 @@
 {
-  "name": "brunch-with-elm",
+  "name": "elm-starter-projects-counter",
   "version": "1.0.0",
-  "description": "Brunch With Elm",
-  "main": "brunch-config.js",
+  "description": "The barest bones Elm app you can imagine.",
   "scripts": {
-    "postinstall": "elm package install -y",
-    "start": "brunch watch --server",
-    "build": "brunch build --production"
+    "start": "parcel app/index.html",
+    "build": "parcel build app/index.html"
   },
   "keywords": [
-    "elm",
-    "brunch"
+    "elm"
   ],
   "author": "You!",
-  "license": "ISC",
+  "license": "ASL",
   "dependencies": {},
   "devDependencies": {
-    "auto-reload-brunch": "^2.7.1",
-    "autoprefixer": "^7.1.6",
-    "brunch": "^2.8.2",
-    "elm-fancy-brunch": "^1.0.1",
-    "elm-format": "^0.6.1-alpha",
-    "postcss-brunch": "^2.1.0"
+    "elm": "^0.19.0-bugfix2",
+    "node-elm-compiler": "^5.0.1",
+    "parcel-bundler": "^1.10.1"
   }
 }
