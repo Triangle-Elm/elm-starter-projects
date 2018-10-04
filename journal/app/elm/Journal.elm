@@ -1,20 +1,19 @@
-module Journal
-    exposing
-        ( Journal
-        , getEntry
-        , updateEntry
-        , addEntry
-        , Entry
-        , updateTitle
-        , updateContent
-        , encode
-        , decoder
-        , empty
-        )
+module Journal exposing
+    ( Entry
+    , Journal
+    , addEntry
+    , decoder
+    , empty
+    , encode
+    , getEntry
+    , updateContent
+    , updateEntry
+    , updateTitle
+    )
 
 import Array exposing (Array)
-import Json.Encode as Encode exposing (object)
 import Json.Decode as Decode exposing (Decoder)
+import Json.Encode as Encode exposing (object)
 
 
 type alias Journal =
@@ -68,8 +67,7 @@ updateContent newContent entry =
 encode : Journal -> Encode.Value
 encode journal =
     Array.toList journal
-        |> List.map encodeEntry
-        |> Encode.list
+        |> Encode.list encodeEntry
 
 
 decoder : Decoder Journal

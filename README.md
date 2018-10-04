@@ -25,9 +25,3 @@ This is a simple Journaling app. It has forms, (slightly broken) navigation, and
 interacts with local storage via ports. Try this out once you have basic
 familiarity with Elm if you're interested in building apps that work with
 textual or static data.
-
-### game
-
-This isn't quite a game yet, but it could be. It uses subscriptions to listen to
-keyboard events and animation frames. Try this one if you're interested in
-building animated or highly interactive applications.

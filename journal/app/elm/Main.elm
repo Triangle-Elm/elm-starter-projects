@@ -1,30 +1,31 @@
 module Main exposing (main)
 
+import Array exposing (Array)
+import Browser exposing (Document)
 import Html
     exposing
         ( Html
-        , text
-        , div
-        , nav
-        , input
-        , textarea
-        , h1
         , a
-        , ul
-        , li
         , button
+        , div
+        , h1
+        , input
+        , li
+        , nav
+        , text
+        , textarea
+        , ul
         )
-import Html.Attributes exposing (class, value, href)
-import Html.Events exposing (onInput, onClick)
+import Html.Attributes exposing (class, href, value)
+import Html.Events exposing (onClick, onInput)
+import Journal exposing (Entry, Journal, updateContent, updateTitle)
 import Markdown
-import Journal exposing (Journal, Entry, updateTitle, updateContent)
-import Array exposing (Array)
 import Ports
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.document
         { init = init
         , update = update
         , view = view
@@ -50,8 +51,8 @@ type ViewState
     | NotFound
 
 
-init : ( Model, Cmd Msg )
-init =
+init : () -> ( Model, Cmd Msg )
+init _ =
     ( { journal = Journal.empty
       , viewState = Listing
       }
@@ -111,14 +112,14 @@ update msg model =
                 newViewState =
                     updateEditingState model.viewState (Journal.updateTitle newTitle)
             in
-                ( { model | viewState = newViewState }, Cmd.none )
+            ( { model | viewState = newViewState }, Cmd.none )
 
         UpdateEntryContent newContent ->
             let
                 newViewState =
                     updateEditingState model.viewState (Journal.updateContent newContent)
             in
-                ( { model | viewState = newViewState }, Cmd.none )
+            ( { model | viewState = newViewState }, Cmd.none )
 
         JournalUpdated journal ->
             let
@@ -133,12 +134,12 @@ update msg model =
                         _ ->
                             model.viewState
             in
-                ( { model
-                    | journal = journal
-                    , viewState = newView
-                  }
-                , Cmd.none
-                )
+            ( { model
+                | journal = journal
+                , viewState = newView
+              }
+            , Cmd.none
+            )
 
         -- unrecognized message from js
         UnknownData description ->
@@ -167,8 +168,12 @@ updateEditingState viewState updateFn =
 -- View
 
 
-view : Model -> Html Msg
 view model =
+    Document "Journal App" [ body model ]
+
+
+body : Model -> Html Msg
+body model =
     case model.viewState of
         Listing ->
             listView model.journal
@@ -194,13 +199,13 @@ listView journal =
                 [ a [ class "title", onClick (ShowEntry idx), href "#" ] [ text entry.title ]
                 ]
     in
-        div []
-            [ button [ class "button-primary", onClick NewEntry ] [ text "New" ]
-            , ul [ class "journal" ]
-                (Array.indexedMap entrySummary journal
-                    |> Array.toList
-                )
-            ]
+    div []
+        [ button [ class "button-primary", onClick NewEntry ] [ text "New" ]
+        , ul [ class "journal" ]
+            (Array.indexedMap entrySummary journal
+                |> Array.toList
+            )
+        ]
 
 
 entryEditor : Msg -> Msg -> Entry -> Html Msg
@@ -209,10 +214,10 @@ entryEditor onSave onCancel entry =
         [ div [ class "editor" ]
             [ div [ class "inputs" ]
                 [ div [ class "title" ]
-                    [ input [ onInput (UpdateEntryTitle), value entry.title ] []
+                    [ input [ onInput UpdateEntryTitle, value entry.title ] []
                     ]
                 , div [ class "content" ]
-                    [ textarea [ onInput (UpdateEntryContent), value entry.content ] []
+                    [ textarea [ onInput UpdateEntryContent, value entry.content ] []
                     ]
                 , nav []
                     [ navLink onCancel "Cancel"

@@ -1,6 +1,6 @@
 const journalKey = "journal";
 
-module.exports = {
+export default {
   setup: function(ports) {
     function sendJournal() {
       ports.fromJs.send(JSON.parse(localStorage.getItem(journalKey)));
