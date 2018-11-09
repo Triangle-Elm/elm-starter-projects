@@ -2,5 +2,4 @@
 call npm install
 dotnet restore src
 cd src
-dotnet fable webpack-dev-server
-
+dotnet fable webpack -- -p
