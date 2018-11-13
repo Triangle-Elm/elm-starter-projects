@@ -1,10 +1,16 @@
 module Markdown
 
-// open Elmish.React
 open Fable.Helpers.React
-// open Fable.Helpers.React.Props
+open Fable.Core
+open Fable.Core.JsInterop
 
-// https://marked.js.org/#/README.md#README.md
+// https://github.com/rexxars/react-markdown
 
-let preview entry =
-    div [] [str "Preview"]
+type MarkdownProps =
+    | Source of string
+    | ClassName of string
+    | EscapeHtml of bool
+    | LinkTarget of string
+
+let markdown (props:MarkdownProps list) = 
+    ofImport "default" "react-markdown" (keyValueList CaseRules.LowerFirst props) []

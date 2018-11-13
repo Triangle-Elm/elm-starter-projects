@@ -101,8 +101,6 @@ let update (msg:Msg) (model:Model) : Model*Cmd<Msg> =
 
 // VIEW (rendered with React)
 
-let placeHolder = div [] [ str "Placeholder"]
-
 let listingView dispatch journal = 
   let entrySummary idx (entry:Entry) =
     li [ ClassName "entry-summary"] [
@@ -118,12 +116,20 @@ let listingView dispatch journal =
   ]
 
 let navLink click content =
-  a [OnClick click] [str content]
+  a [OnClick click; Href "#"] [str content]
 
 let entryDisplay entry =
-  Markdown.preview entry
+  div [ClassName "entry"] [
+    h1 [ClassName "title"] [ str entry.title ]
+    div [ClassName "content"] [
+      Markdown.markdown [Markdown.Source entry.content]
+    ]
+  ]
 
-let notFoundView = placeHolder
+let notFoundView =
+  div [] [
+    h1 [] [ str "Not found"]
+  ]
 
 let entryViewer dispatch pos journal =
   match Journal.getEntry pos journal with
@@ -142,10 +148,16 @@ let entryEditor dispatch onSave onCancel entry =
     div [ClassName "editor"] [
       div [ClassName "inputs"] [
         div [ClassName "title"] [
-          input [OnInput (fun arg -> UpdateEntryTitle arg.Value |> dispatch)]
+          input [
+            OnInput (fun arg -> UpdateEntryTitle arg.Value |> dispatch)
+            DefaultValue entry.title
+          ]
         ]
         div [ClassName "content"] [
-          textarea [OnInput (fun arg -> UpdateEntryContent arg.Value |> dispatch)] []
+          textarea [
+            OnInput (fun arg -> UpdateEntryContent arg.Value |> dispatch)
+            DefaultValue entry.content
+          ] []
         ]
         nav [] [
           navLink (fun _ -> dispatch onCancel) "Cancel"
