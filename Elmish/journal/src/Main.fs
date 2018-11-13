@@ -103,17 +103,69 @@ let update (msg:Msg) (model:Model) : Model*Cmd<Msg> =
 
 let placeHolder = div [] [ str "Placeholder"]
 
-let listingView _ = placeHolder
-let entryViewer _ _ = placeHolder
-let entryEditor _ _ _ = placeHolder
+let listingView dispatch journal = 
+  let entrySummary idx (entry:Entry) =
+    li [ ClassName "entry-summary"] [
+      a [ ClassName "title"; OnClick (fun _ -> ShowEntry idx |> dispatch); Href "#" ] [
+        str entry.title
+      ]
+    ]
+  div [] [
+    button [ClassName "button-primary"; OnClick (fun _ -> dispatch NewEntry) ] [ str "New" ]
+    ul [ ClassName "journal" ] ( 
+      Array.mapi entrySummary journal |> Array.toList
+    )
+  ]
+
+let navLink click content =
+  a [OnClick click] [str content]
+
+let entryDisplay entry =
+  Markdown.preview entry
+
 let notFoundView = placeHolder
+
+let entryViewer dispatch pos journal =
+  match Journal.getEntry pos journal with
+  | None -> notFoundView
+  | Some entry ->
+    div[] [
+      nav [] [
+        navLink (fun _ -> ListEntries |> dispatch) "< Back"
+        navLink (fun _ -> EditEntry pos |> dispatch) "Edit"
+      ]
+      entryDisplay entry
+    ]
+
+let entryEditor dispatch onSave onCancel entry = 
+  div [] [
+    div [ClassName "editor"] [
+      div [ClassName "inputs"] [
+        div [ClassName "title"] [
+          input [OnInput (fun arg -> UpdateEntryTitle arg.Value |> dispatch)]
+        ]
+        div [ClassName "content"] [
+          textarea [OnInput (fun arg -> UpdateEntryContent arg.Value |> dispatch)] []
+        ]
+        nav [] [
+          navLink (fun _ -> dispatch onCancel) "Cancel"
+          button [ClassName "button-primary"; OnClick (fun _ -> dispatch onSave)] [
+            str "Save"]
+        ]
+      ]
+      div [ ClassName "preview" ] [
+        entryDisplay entry
+      ]
+    ]
+  ]
+
 
 let view (model:Model) dispatch =
   match model.viewState with
-  | Listing -> listingView model.journal
-  | Viewing pos -> entryViewer pos model.journal
-  | Creating entry -> entryEditor SaveEntry ListEntries entry
-  | Editing (pos,entry) -> entryEditor SaveEntry (ShowEntry pos) entry
+  | Listing -> listingView dispatch model.journal
+  | Viewing pos -> entryViewer dispatch pos model.journal
+  | Creating entry -> entryEditor dispatch SaveEntry ListEntries entry
+  | Editing (pos,entry) -> entryEditor dispatch SaveEntry (ShowEntry pos) entry
   | NotFound -> notFoundView
 
 // App
