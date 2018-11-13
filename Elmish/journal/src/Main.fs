@@ -38,51 +38,83 @@ type Msg =
 | JournalUpdated of Journal
 | UnknownData of string
 
-
-let loadJournalSync() =
-    match LocalStorage.loadJournalSync Journal.decode with 
-    | Ok j -> JournalUpdated j
-    | Error e -> UnknownData e
-
-let init() = 
+let init() : Model*Cmd<Msg> = 
   { journal = Journal.empty
     viewState = Listing }, 
-    Cmd.ofMsg (loadJournalSync())
+    Cmd.ofSub (LocalStorage.journalSub Journal.decode JournalUpdated)
 
 // UPDATE
 
-let update (msg:Msg) (model:Model) =
+let updateEditingState viewState updateFn =
+  match viewState with
+  | Editing (pos,entry) ->
+    Editing (pos,updateFn entry)
+  | Creating entry ->
+    Creating (updateFn entry)
+  | _ -> viewState
+
+let update (msg:Msg) (model:Model) : Model*Cmd<Msg> =
     match msg with
     | ShowEntry i ->
-      { model with viewState = Viewing i }, Cmd.Empty
+      { model with viewState = Viewing i }, Cmd.none
 
     | ListEntries ->
-      { model with viewState = Listing }, Cmd.Empty
+      { model with viewState = Listing }, Cmd.none
 
     | EditEntry i ->
       match Journal.getEntry i model.journal with
-      | Some entry -> { model with viewState = Editing (i, entry) }, Cmd.Empty
-      | None -> model, Cmd.Empty
+      | Some entry -> { model with viewState = Editing (i, entry) }, Cmd.none
+      | None -> model, Cmd.none
 
     | NewEntry ->
-      { model with viewState = Creating Entry.empty }, Cmd.Empty
+      { model with viewState = Creating Entry.empty }, Cmd.none
 
-    | SaveEntry -> failwith "Not Implemented"
-    | UpdateEntryTitle(_) -> failwith "Not Implemented"
-    | UpdateEntryContent(_) -> failwith "Not Implemented"
-    | JournalUpdated j -> { model with journal = j }, Cmd.Empty
+    | SaveEntry -> 
+      match model.viewState with
+      | Editing (pos,entry) ->
+        let cmd = LocalStorage.saveJournal (Journal.updateEntry pos entry model.journal) JournalUpdated
+        model, [cmd]
+      | Creating entry ->
+        model, [LocalStorage.saveJournal (Journal.addEntry entry model.journal) JournalUpdated]
+      | _ -> model, Cmd.none
+
+    | UpdateEntryTitle newTitle ->
+      let newViewState = updateEditingState model.viewState (Journal.updateTitle newTitle)
+      { model with viewState = newViewState }, Cmd.none
+
+    | UpdateEntryContent content -> 
+      let newViewState = updateEditingState model.viewState (Journal.updateContent content)
+      { model with viewState = newViewState }, Cmd.none
+
+    | JournalUpdated j -> 
+      let newView =
+        match model.viewState with
+        | Editing (pos,_) -> Viewing pos
+        | Creating _ -> Listing
+        | _ -> model.viewState
+      { model with journal = j; viewState = newView }, Cmd.none
+
     | UnknownData msg -> 
-      printfn "%s" msg
-      model, Cmd.Empty
+      // Unused
+      model, Cmd.none
+
 
 // VIEW (rendered with React)
 
-let view (model:Model) dispatch =
+let placeHolder = div [] [ str "Placeholder"]
 
-  div []
-      [ button [ OnClick (fun _ -> dispatch Increment) ] [ str "+" ]
-        div [] [ str (string model) ]
-        button [ OnClick (fun _ -> dispatch Decrement) ] [ str "-" ] ]
+let listingView _ = placeHolder
+let entryViewer _ _ = placeHolder
+let entryEditor _ _ _ = placeHolder
+let notFoundView = placeHolder
+
+let view (model:Model) dispatch =
+  match model.viewState with
+  | Listing -> listingView model.journal
+  | Viewing pos -> entryViewer pos model.journal
+  | Creating entry -> entryEditor SaveEntry ListEntries entry
+  | Editing (pos,entry) -> entryEditor SaveEntry (ShowEntry pos) entry
+  | NotFound -> notFoundView
 
 // App
 Program.mkProgram init update view
